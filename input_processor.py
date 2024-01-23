@@ -2,10 +2,6 @@ from pynput import keyboard as kb
 import ctypes
 
 
-STOPPAGE_COMBINATIONS = {
-    ("ctrl_l", "1"),
-    ("ctrl_l", "2")
-}
 ACCENTED_SYMBOLS = {
     "a": ["ā", "á", "ǎ", "à"],
     "A": ["Ā", "Á", "Ǎ", "À"],
