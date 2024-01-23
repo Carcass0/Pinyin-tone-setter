@@ -44,6 +44,7 @@ def current_keyboard_language() -> str:
 
 def update_sequence(key: kb.Key, key_sequence: list[str, str]):
     """listens to and records all button presses"""
+
     def replace_sequence(target_list: list[str, str], value: str) -> None:
         """Save 2 last pressed keys to provided list"""
         target_list[0] = target_list[1]
@@ -71,16 +72,14 @@ def update_state(state_list: list[bool, int], skip_count: int, desired_state: bo
         state_list[1] = 0
     else: 
         state_list[1]=skip_count
-    print('state list', state_list)
 
 
 def on_press(
     key: kb.Key, keyboard: kb.Controller, key_sequence: list[str, str], processing_state: list[bool, int]
     ) -> bool | None:
     update_sequence(key, key_sequence) 
-    print(processing_state)
     if set(key_sequence).intersection(CHANGE_PROVOKING_KEYS):
-        """Responds to potential change in keyboard language.
+        """Responding to potential change in keyboard language.
         Aims to only process events if desired language is being used."""
         if processing_state[1]<0:
             pass
@@ -90,24 +89,22 @@ def on_press(
             update_state(processing_state, 0, False)
 
     if len(set(key_sequence).intersection(stoppage_hotkey))==2:
-        """Handles turning the processing on and off with a hotkey.
+        """Handling turning the processing on and off with a hotkey.
         The app only supports stoppage hotkeys with length of 2.
-        Therefore a intersection of length of 2 constitutes a match."""
+        Therefore a intersection of length of 2 constitutes a match.
+        -1 is only used here, therefore disallowing hotkey
+        sleep mode from being overridden"""
         print('tracker')
         update_state(processing_state, -1, switch=True)
 
     if not processing_state[0]:
-        """Handling early exit due to wrong keyboard or a set skip counter"""
+        """Handling early exit due to wrong keyboard being selected or a set skip counter"""
         if processing_state[1]>0:
             if processing_state[1]==1:
                 update_state(state_list=processing_state, skip_count=0, desired_state=True)
                 return True
             update_state(state_list=processing_state, skip_count=processing_state[1]-1)
         return True
-    
-    if key == kb.Key.esc:
-        """WIP stop-word"""
-        return False
     
     if key_sequence[0] in ACCENTED_SYMBOLS and key_sequence[1].isnumeric():
         """Replace vowels with their required accented version"""
