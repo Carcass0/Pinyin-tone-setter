@@ -1,5 +1,5 @@
-from pynput import keyboard as kb
 import ctypes
+from pynput.keyboard import Key, Controller, Listener
 
 
 ACCENTED_SYMBOLS = {
@@ -15,7 +15,7 @@ ACCENTED_SYMBOLS = {
     "U": ["Ū", "Ú", "Ǔ", "Ù", "Ü", "Ǖ", "Ǘ", "Ǚ", "Ǜ"],
 }
 CHANGE_PROVOKING_KEYS = {'alt', 'alt_l', 'alt_r', 'alt_gr', 'ctrl', 'ctrl_l', 'ctrl_r', 'shift', 'shift_l', 'shift_r'}
-desired_keyboards = ['0x804']
+desired_keyboard = '0x804'
 stoppage_hotkey = ['alt_l', 'alt_gr']
 
 
@@ -38,7 +38,7 @@ def current_keyboard_language() -> str:
     return hex(language_id)
 
 
-def update_sequence(key: kb.Key, key_sequence: list[str, str]):
+def update_sequence(key: Key, key_sequence: list[str, str]):
     """listens to and records all button presses"""
 
     def replace_sequence(target_list: list[str, str], value: str) -> None:
@@ -70,8 +70,8 @@ def update_state(state_list: list[bool, int], skip_count: int, desired_state: bo
         state_list[1]=skip_count
 
 
-def on_press(
-    key: kb.Key, keyboard: kb.Controller, key_sequence: list[str, str], processing_state: list[bool, int]
+def main_processor(
+    key: Key, keyboard: Controller, key_sequence: list[str, str], processing_state: list[bool, int]
     ) -> bool | None:
     update_sequence(key, key_sequence) 
     if set(key_sequence).intersection(CHANGE_PROVOKING_KEYS):
@@ -79,18 +79,17 @@ def on_press(
         Aims to only process events if desired language is being used."""
         if processing_state[1]<0:
             pass
-        elif not processing_state[0] and current_keyboard_language() in desired_keyboards:
+        elif not processing_state[0] and current_keyboard_language() == desired_keyboard:
             update_state(processing_state, 0, True)
-        elif processing_state[0] and current_keyboard_language() not in desired_keyboards:
+        elif processing_state[0] and current_keyboard_language() != desired_keyboard:
             update_state(processing_state, 0, False)
 
-    if len(set(key_sequence).intersection(stoppage_hotkey))==2:
+    if len(set(key_sequence).intersection(stoppage_hotkey))==2 or (len(set(key_sequence).intersection(stoppage_hotkey))==1 and stoppage_hotkey.count('')==1):
         """Handling turning the processing on and off with a hotkey.
         The app only supports stoppage hotkeys with length of 2.
         Therefore a intersection of length of 2 constitutes a match.
         -1 is only used here, therefore disallowing hotkey
         sleep mode from being overridden"""
-        print('tracker')
         update_state(processing_state, -1, switch=True)
 
     if not processing_state[0]:
@@ -105,23 +104,23 @@ def on_press(
     if key_sequence[0] in ACCENTED_SYMBOLS and key_sequence[1].isnumeric():
         """Replace vowels with their required accented version"""
         update_state(processing_state, 3, False)   
-        keyboard.press(kb.Key.backspace)     
-        keyboard.release(kb.Key.backspace)
-        keyboard.press(kb.Key.backspace)     
-        keyboard.release(kb.Key.backspace)       
+        keyboard.press(Key.backspace)     
+        keyboard.release(Key.backspace)
+        keyboard.press(Key.backspace)     
+        keyboard.release(Key.backspace)       
         keyboard.press(ACCENTED_SYMBOLS[key_sequence[0]][int(key_sequence[1]) - 1])
         keyboard.release(ACCENTED_SYMBOLS[key_sequence[0]][int(key_sequence[1]) - 1])
 
 
 def main() -> None:
-    keyboard = kb.Controller()
+    keyboard = Controller()
     key_sequence: list[str] = ["", ""]
-    if current_keyboard_language() in desired_keyboards:
+    if current_keyboard_language() == desired_keyboard:
       processing_state = [True, 0]  
     else:
         processing_state = [False, 0]
-    on_press_action = lambda pressed: on_press(key = pressed, keyboard=keyboard, key_sequence=key_sequence, processing_state=processing_state)
-    with kb.Listener(
+    on_press_action = lambda pressed: main_processor(key = pressed, keyboard=keyboard, key_sequence=key_sequence, processing_state=processing_state)
+    with Listener(
         on_press= on_press_action
     ) as listener:  # Setup the listener
         listener.join()  # Join the thread to the main thread

@@ -1,9 +1,10 @@
 from PyQt6 import QtWidgets, QtGui
 from PyQt6.QtCore import Qt
 from dialog import Ui_Dialog
+from pynput.keyboard import Listener
 import sys
 import os
-
+from input_processor import update_sequence, desired_keyboard, stoppage_hotkey
 
 LANGUAGES = {'0x436' : "Afrikaans - South Africa", '0x041c' : "Albanian - Albania", '0x045e' : "Amharic - Ethiopia", '0x401' : "Arabic - Saudi Arabia",
                  '0x1401' : "Arabic - Algeria", '0x3c01' : "Arabic - Bahrain", '0x0c01' : "Arabic - Egypt", '0x801' : "Arabic - Iraq", '0x2c01' : "Arabic - Jordan",
@@ -53,7 +54,6 @@ LANGUAGES = {'0x436' : "Afrikaans - South Africa", '0x041c' : "Albanian - Albani
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(".")
@@ -64,12 +64,47 @@ def resource_path(relative_path):
 class SettingsDialog(QtWidgets.QDialog):
     def __init__(self):
         super(SettingsDialog, self).__init__()
+        self.hotkey_recording_status = False
+        self.hotkey_listener: Listener|None = None
+        self.hotkeys: list[str, str] = None
         self.ui=Ui_Dialog()
         self.ui.setupUi(self)
         for number, name in LANGUAGES.items():
-            self.ui.languageBox.addItem(name, number)
+            self.ui.language_box.addItem(name, number)
+        self.ui.language_box.setFocus()
+        self.ui.confirm_button.clicked.connect(lambda: self.confirm_input())
+        self.ui.record_button.clicked.connect(lambda: self.start_stop_hotkey_recording())
 
+    def start_stop_hotkey_recording(self) -> None:
+        def record_keys(window: SettingsDialog, key, key_sequence) -> None:
+            update_sequence(key, key_sequence) 
+            window.ui.shortcut_edit.setText('+'.join(x for x in key_sequence))
+        
+        def assign_hotkey(window: SettingsDialog, key_sequence) -> Listener:
+            listener = Listener(on_press =lambda pressed: record_keys(window, pressed, key_sequence))
+            listener.start()
+            return listener
+        
+        if not self.hotkey_recording_status:
+            self.ui.record_button.setText('Stop recording')
+            self.ui.shortcut_edit.setFocus()
+            self.hotkey_recording_status = not self.hotkey_recording_status
+            key_sequence: list[str] = ['', '']
+            self.hotkey_listener = assign_hotkey(self, key_sequence)
+            return 
+        self.hotkey_listener.stop()
+        self.ui.record_button.setText('Start recording')
+        hotkey_string = self.ui.shortcut_edit.text()
+        self.hotkeys = hotkey_string.split('+')
 
+    def confirm_input(self) -> None:
+         global desired_keyboard
+         global stoppage_hotkey
+         desired_keyboard = self.ui.language_box.currentData()
+         stoppage_hotkey = self.hotkeys
+         self.close()
+        
+        
 if __name__=='__main__':
     app = QtWidgets.QApplication([])
     app.setQuitOnLastWindowClosed(True)
@@ -81,3 +116,4 @@ if __name__=='__main__':
     window.setWindowIcon(QtGui.QIcon(resource_path('Icon.ico')))
     window.show()
     app.exec()
+    print(desired_keyboard,'\n',stoppage_hotkey)
