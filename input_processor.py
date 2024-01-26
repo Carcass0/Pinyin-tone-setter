@@ -20,11 +20,7 @@ stoppage_hotkey = ['alt_l', 'alt_gr']
 
 
 def current_keyboard_language() -> str:
-    """
-    0x804 - Chinese - People's Republic of China
-    0x409 - English - United States
-    0x419 - Russian
-    """
+    """Get current keyboard language."""
     user32 = ctypes.WinDLL('user32', use_last_error=True)
     # Get the current active window handle
     handle = user32.GetForegroundWindow()
@@ -39,7 +35,7 @@ def current_keyboard_language() -> str:
 
 
 def update_sequence(key: Key, key_sequence: list[str, str]):
-    """listens to and records all button presses"""
+    """Listens to and records all button presses"""
 
     def replace_sequence(target_list: list[str, str], value: str) -> None:
         """Save 2 last pressed keys to provided list"""
@@ -122,8 +118,8 @@ def main() -> None:
     on_press_action = lambda pressed: main_processor(key = pressed, keyboard=keyboard, key_sequence=key_sequence, processing_state=processing_state)
     with Listener(
         on_press= on_press_action
-    ) as listener:  # Setup the listener
-        listener.join()  # Join the thread to the main thread
+    ) as listener:
+        listener.join() 
 
 
 if __name__ == "__main__":

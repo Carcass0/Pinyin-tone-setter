@@ -74,6 +74,7 @@ class SettingsDialog(QtWidgets.QDialog):
         self.ui.language_box.setFocus()
         self.ui.confirm_button.clicked.connect(lambda: self.confirm_input())
         self.ui.record_button.clicked.connect(lambda: self.start_stop_hotkey_recording())
+        
 
     def start_stop_hotkey_recording(self) -> None:
         def record_keys(window: SettingsDialog, key, key_sequence) -> None:
@@ -107,13 +108,26 @@ class SettingsDialog(QtWidgets.QDialog):
         
 if __name__=='__main__':
     app = QtWidgets.QApplication([])
-    app.setQuitOnLastWindowClosed(True)
+    app.setQuitOnLastWindowClosed(False)
     icon = QtGui.QIcon(resource_path('Icon.ico'))
     tray = QtWidgets.QSystemTrayIcon()
     tray.setIcon(icon)
     tray.setVisible(True)
+    menu = QtWidgets.QMenu()
+    action1 = QtGui.QAction("Hex")
+    action1.triggered.connect()
+    menu.addAction(action1)
+    action2 = QtGui.QAction("RGB")
+    action2.triggered.connect()
+    menu.addAction(action2)
+    action3 = QtGui.QAction("HSV")
+    action3.triggered.connect()
+    menu.addAction(action3)
+    quit = QtGui.QAction("Quit")
+    quit.triggered.connect(app.quit)
+    menu.addAction(quit)
+    tray.setContextMenu(menu)
     window = SettingsDialog()
-    window.setWindowIcon(QtGui.QIcon(resource_path('Icon.ico')))
+    window.setWindowIcon(icon)
     window.show()
     app.exec()
-    print(desired_keyboard,'\n',stoppage_hotkey)
