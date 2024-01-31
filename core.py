@@ -4,7 +4,7 @@ from dialog import Ui_Dialog
 from pynput.keyboard import Listener
 import sys
 import os
-from input_processor import update_sequence, desired_keyboard, stoppage_hotkey
+from input_handler import update_sequence, desired_keyboard, stoppage_hotkey
 
 LANGUAGES = {'0x436' : "Afrikaans - South Africa", '0x041c' : "Albanian - Albania", '0x045e' : "Amharic - Ethiopia", '0x401' : "Arabic - Saudi Arabia",
                  '0x1401' : "Arabic - Algeria", '0x3c01' : "Arabic - Bahrain", '0x0c01' : "Arabic - Egypt", '0x801' : "Arabic - Iraq", '0x2c01' : "Arabic - Jordan",
@@ -81,7 +81,7 @@ class SettingsDialog(QtWidgets.QDialog):
             update_sequence(key, key_sequence) 
             window.ui.shortcut_edit.setText('+'.join(x for x in key_sequence))
         
-        def assign_hotkey(window: SettingsDialog, key_sequence) -> Listener:
+        def assign_hotkey_listener(window: SettingsDialog, key_sequence) -> Listener:
             listener = Listener(on_press =lambda pressed: record_keys(window, pressed, key_sequence))
             listener.start()
             return listener
@@ -91,7 +91,7 @@ class SettingsDialog(QtWidgets.QDialog):
             self.ui.shortcut_edit.setFocus()
             self.hotkey_recording_status = not self.hotkey_recording_status
             key_sequence: list[str] = ['', '']
-            self.hotkey_listener = assign_hotkey(self, key_sequence)
+            self.hotkey_listener = assign_hotkey_listener(self, key_sequence)
             return 
         self.hotkey_listener.stop()
         self.ui.record_button.setText('Start recording')
@@ -99,11 +99,11 @@ class SettingsDialog(QtWidgets.QDialog):
         self.hotkeys = hotkey_string.split('+')
 
     def confirm_input(self) -> None:
-         global desired_keyboard
-         global stoppage_hotkey
-         desired_keyboard = self.ui.language_box.currentData()
-         stoppage_hotkey = self.hotkeys
-         self.close()
+        global desired_keyboard
+        global stoppage_hotkey
+        desired_keyboard = self.ui.language_box.currentData()
+        stoppage_hotkey = self.hotkeys
+        self.close()
         
         
 if __name__=='__main__':
@@ -115,19 +115,21 @@ if __name__=='__main__':
     tray.setVisible(True)
     menu = QtWidgets.QMenu()
     action1 = QtGui.QAction("Hex")
-    action1.triggered.connect()
+    # action1.triggered.connect()
     menu.addAction(action1)
     action2 = QtGui.QAction("RGB")
-    action2.triggered.connect()
+    # action2.triggered.connect()
     menu.addAction(action2)
     action3 = QtGui.QAction("HSV")
-    action3.triggered.connect()
+    # action3.triggered.connect()
     menu.addAction(action3)
     quit = QtGui.QAction("Quit")
     quit.triggered.connect(app.quit)
     menu.addAction(quit)
     tray.setContextMenu(menu)
     window = SettingsDialog()
+    with open('light-mode.css', 'r') as f:
+        window.setStyleSheet(f.read())
     window.setWindowIcon(icon)
     window.show()
     app.exec()

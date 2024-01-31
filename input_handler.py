@@ -20,7 +20,10 @@ stoppage_hotkey = ['alt_l', 'alt_gr']
 
 
 def current_keyboard_language() -> str:
-    """Get current keyboard language."""
+    """Get current keyboard language.
+    source:
+    https://stackoverflow.com/questions/42047253/how-to-detect-current-keyboard-language-in-python
+    """
     user32 = ctypes.WinDLL('user32', use_last_error=True)
     # Get the current active window handle
     handle = user32.GetForegroundWindow()

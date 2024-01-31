@@ -1,0 +1,11 @@
+QPushButton:hover {
+	border: 2px solid rgb(150, 150, 150);
+	border-radius: 5px;
+	background: rgb(245, 245, 245);
+}
+
+QPushButton:focus {
+	border: 2px solid rgb(150, 150, 150);
+	border-radius: 5px;
+	background: rgb(245, 245, 245);
+}

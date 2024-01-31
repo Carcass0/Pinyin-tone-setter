@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>496</width>
-    <height>266</height>
+    <width>692</width>
+    <height>254</height>
    </rect>
   </property>
   <property name="font">
@@ -16,42 +16,36 @@
     <pointsize>14</pointsize>
    </font>
   </property>
+  <property name="focusPolicy">
+   <enum>Qt::StrongFocus</enum>
+  </property>
   <property name="windowTitle">
    <string>Pinyin Tones</string>
   </property>
   <property name="styleSheet">
-   <string notr="true"/>
+   <string notr="true">QPushButton:hover {
+	border: 2px solid rgb(150, 150, 150);
+	border-radius: 5px;
+	background: rgb(245, 245, 245);
+}
+
+QPushButton:focus {
+	border: 2px solid rgb(150, 150, 150);
+	border-radius: 5px;
+	background: rgb(245, 245, 245);
+}
+</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
    <item row="0" column="0">
-    <layout class="QGridLayout" name="gridLayout" columnstretch="0,0">
-     <property name="spacing">
+    <layout class="QGridLayout" name="gridLayout" columnstretch="2,1,1,2">
+     <property name="horizontalSpacing">
       <number>20</number>
      </property>
-     <item row="5" column="0">
-      <widget class="QLineEdit" name="shortcut_edit">
-       <property name="font">
-        <font>
-         <family>Bahnschrift</family>
-         <pointsize>14</pointsize>
-        </font>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="1">
-      <widget class="QPushButton" name="record_button">
-       <property name="font">
-        <font>
-         <family>Bahnschrift</family>
-         <pointsize>14</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>Start Recording</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0" colspan="2">
+     <property name="verticalSpacing">
+      <number>15</number>
+     </property>
+     <item row="3" column="0" colspan="4">
       <widget class="QLabel" name="shortcut_label">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -73,7 +67,7 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0" colspan="2">
+     <item row="2" column="0" colspan="4">
       <widget class="QComboBox" name="language_box">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -99,9 +93,45 @@
        <property name="duplicatesEnabled">
         <bool>true</bool>
        </property>
+       <item>
+        <property name="text">
+         <string>t1</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>t2</string>
+        </property>
+       </item>
       </widget>
      </item>
-     <item row="0" column="0" colspan="2">
+     <item row="5" column="3">
+      <widget class="QPushButton" name="record_button">
+       <property name="font">
+        <font>
+         <family>Bahnschrift</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="text">
+        <string>Start Recording</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0" colspan="3">
+      <widget class="QLineEdit" name="shortcut_edit">
+       <property name="font">
+        <font>
+         <family>Bahnschrift</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1" colspan="2">
       <widget class="QLabel" name="keyboard_label">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -116,7 +146,7 @@
         </font>
        </property>
        <property name="text">
-        <string>~~~        Choose your desired keyboard:       ~~~</string>
+        <string>Choose your desired keyboard:</string>
        </property>
        <property name="scaledContents">
         <bool>false</bool>
@@ -126,7 +156,7 @@
        </property>
       </widget>
      </item>
-     <item row="6" column="0" colspan="2">
+     <item row="6" column="1" colspan="2">
       <widget class="QPushButton" name="confirm_button">
        <property name="font">
         <font>
@@ -134,9 +164,61 @@
          <pointsize>14</pointsize>
         </font>
        </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
        <property name="text">
         <string>Confirm</string>
        </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QComboBox" name="locale_box">
+       <property name="font">
+        <font>
+         <family>Bahnschrift</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <property name="editable">
+        <bool>false</bool>
+       </property>
+       <item>
+        <property name="text">
+         <string>t1</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>t2</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="QComboBox" name="colour_box">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font/>
+       </property>
+       <property name="editable">
+        <bool>false</bool>
+       </property>
+       <item>
+        <property name="text">
+         <string>test</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>t2</string>
+        </property>
+       </item>
       </widget>
      </item>
     </layout>
