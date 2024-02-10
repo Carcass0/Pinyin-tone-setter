@@ -5,7 +5,12 @@ import os
 from pynput.keyboard import Listener
 from PyQt6 import QtWidgets, QtGui
 
-from input_handler import update_sequence, setup_listener, desired_keyboard, stoppage_hotkey
+from input_handler import (
+    update_sequence,
+    setup_listener,
+    desired_keyboard,
+    stoppage_hotkey,
+)
 from dialog import Ui_Dialog
 
 
@@ -82,19 +87,22 @@ class SettingsDialog(QtWidgets.QDialog):
         self.ui.shortcut_edit.setText(f"{self.hotkeys[0]}+{self.hotkeys[1]}")
         self.ui.shortcut_edit.setReadOnly(True)
         self.ui.confirm_button.clicked.connect(lambda: self.confirm_input())
-        self.ui.record_button.clicked.connect(lambda: self.start_stop_hotkey_recording())
+        self.ui.record_button.clicked.connect(
+            lambda: self.start_stop_hotkey_recording()
+        )
         self.resize(QtWidgets.QWidget.minimumSizeHint(self))
 
     def start_stop_hotkey_recording(self) -> None:
 
         def record_keys(window: SettingsDialog, key, key_sequence) -> None:
-            print(key_sequence)
             update_sequence(key, key_sequence)
             window.ui.shortcut_edit.setText("")
             window.ui.shortcut_edit.setText("+".join(x for x in key_sequence))
 
         def assign_hotkey_listener(window: SettingsDialog, key_sequence) -> Listener:
-            listener = Listener(on_press=lambda pressed: record_keys(window, pressed, key_sequence))
+            listener = Listener(
+                on_press=lambda pressed: record_keys(window, pressed, key_sequence)
+            )
             listener.start()
             return listener
 
@@ -114,6 +122,9 @@ class SettingsDialog(QtWidgets.QDialog):
         global stoppage_hotkey
         desired_keyboard = self.ui.language_box.currentData()
         stoppage_hotkey = self.hotkeys
+        new_settings = {"keyboard": desired_keyboard, "stoppage-hotkey": self.hotkeys}
+        with open(resource_path("settings.json"), "w") as file:
+            json.dump(new_settings, file)
         main_listener.start()
         self.close()
 
@@ -135,7 +146,7 @@ if __name__ == "__main__":
     with open(resource_path("settings.json"), "r") as f:
         user_settings: dict[str, str] = json.load(f)
     desired_keyboard = user_settings["keyboard"]
-    stoppage_hotkey = user_settings["stoppage-hotkey"].split("+")
+    stoppage_hotkey = user_settings["stoppage-hotkey"]
     main_listener = setup_listener()
     app = QtWidgets.QApplication([])
     app.setQuitOnLastWindowClosed(False)
