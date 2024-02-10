@@ -141,7 +141,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
 
 if __name__ == "__main__":
-    if os.path.isfile("settings.json"):
+    if os.path.isfile("pinyin-settings.json"):
         with open("pinyin-settings.json", "r") as f:
             user_settings: dict[str, str] = json.load(f)
         desired_keyboard = user_settings["keyboard"]
