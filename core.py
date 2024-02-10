@@ -73,8 +73,6 @@ class SettingsDialog(QtWidgets.QDialog):
 
     def __init__(self):
         super(SettingsDialog, self).__init__()
-        with open("light-mode.css", "r") as f:
-            self.setStyleSheet(f.read())
         self.setWindowIcon(QtGui.QIcon(resource_path("Icon.ico")))
         self.hotkey_recording_status = False
         self.hotkeys = stoppage_hotkey
