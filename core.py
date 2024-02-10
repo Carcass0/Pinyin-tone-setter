@@ -1,10 +1,13 @@
-from PyQt6 import QtWidgets, QtGui
-from PyQt6.QtCore import Qt
-from dialog import Ui_Dialog
-from pynput.keyboard import Listener
+import json
 import sys
 import os
+
+from pynput.keyboard import Listener
+from PyQt6 import QtWidgets, QtGui
+
 from input_handler import update_sequence, desired_keyboard, stoppage_hotkey
+from dialog import Ui_Dialog
+
 
 LANGUAGES = {'0x436' : "Afrikaans - South Africa", '0x041c' : "Albanian - Albania", '0x045e' : "Amharic - Ethiopia", '0x401' : "Arabic - Saudi Arabia",
                  '0x1401' : "Arabic - Algeria", '0x3c01' : "Arabic - Bahrain", '0x0c01' : "Arabic - Egypt", '0x801' : "Arabic - Iraq", '0x2c01' : "Arabic - Jordan",
@@ -51,10 +54,10 @@ LANGUAGES = {'0x436' : "Afrikaans - South Africa", '0x041c' : "Albanian - Albani
                  }
 
 
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
+def resource_path(relative_path) -> str:
+    """Get absolute path to resource, works for dev and for PyInstaller"""
     try:
-        base_path = sys._MEIPASS
+        base_path = sys._MEIPASS  # type: ignore
     except Exception:
         base_path = os.path.abspath(".")
 
@@ -62,41 +65,49 @@ def resource_path(relative_path):
 
 
 class SettingsDialog(QtWidgets.QDialog):
+
     def __init__(self):
         super(SettingsDialog, self).__init__()
+        with open("light-mode.css", "r") as f:
+            self.setStyleSheet(f.read())
+        self.setWindowIcon(QtGui.QIcon(resource_path("Icon.ico")))
         self.hotkey_recording_status = False
-        self.hotkey_listener: Listener|None = None
-        self.hotkeys: list[str, str] = None
-        self.ui=Ui_Dialog()
+        self.hotkeys = stoppage_hotkey
+        self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         for number, name in LANGUAGES.items():
             self.ui.language_box.addItem(name, number)
+        self.ui.language_box.setCurrentIndex(list(LANGUAGES).index(desired_keyboard))
         self.ui.language_box.setFocus()
+        self.ui.shortcut_edit.setText(f"{self.hotkeys[0]}+{self.hotkeys[1]}")
+        self.ui.shortcut_edit.setReadOnly(True)
         self.ui.confirm_button.clicked.connect(lambda: self.confirm_input())
         self.ui.record_button.clicked.connect(lambda: self.start_stop_hotkey_recording())
-        
+        self.resize(QtWidgets.QWidget.minimumSizeHint(self))
 
     def start_stop_hotkey_recording(self) -> None:
+
         def record_keys(window: SettingsDialog, key, key_sequence) -> None:
-            update_sequence(key, key_sequence) 
-            window.ui.shortcut_edit.setText('+'.join(x for x in key_sequence))
-        
+            print(key_sequence)
+            update_sequence(key, key_sequence)
+            window.ui.shortcut_edit.setText('')
+            window.ui.shortcut_edit.setText("+".join(x for x in key_sequence))
+
         def assign_hotkey_listener(window: SettingsDialog, key_sequence) -> Listener:
-            listener = Listener(on_press =lambda pressed: record_keys(window, pressed, key_sequence))
+            listener = Listener(on_press=lambda pressed: record_keys(window, pressed, key_sequence))
             listener.start()
             return listener
-        
+
         if not self.hotkey_recording_status:
-            self.ui.record_button.setText('Stop recording')
+            self.ui.record_button.setText("Stop recording")
             self.ui.shortcut_edit.setFocus()
             self.hotkey_recording_status = not self.hotkey_recording_status
-            key_sequence: list[str] = ['', '']
+            key_sequence: list[str] = ["", ""]
             self.hotkey_listener = assign_hotkey_listener(self, key_sequence)
-            return 
+            return
         self.hotkey_listener.stop()
-        self.ui.record_button.setText('Start recording')
-        hotkey_string = self.ui.shortcut_edit.text()
-        self.hotkeys = hotkey_string.split('+')
+        self.ui.record_button.setText("Start recording")
+        self.hotkeys = self.ui.shortcut_edit.text().split("+")
 
     def confirm_input(self) -> None:
         global desired_keyboard
@@ -104,32 +115,29 @@ class SettingsDialog(QtWidgets.QDialog):
         desired_keyboard = self.ui.language_box.currentData()
         stoppage_hotkey = self.hotkeys
         self.close()
-        
-        
-if __name__=='__main__':
+
+
+class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
+
+    def __init__(self, icon: QtGui.QIcon, app: QtWidgets.QApplication, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setIcon(icon)
+        self.show()
+        menu = QtWidgets.QMenu()
+        self.quit = QtGui.QAction("Quit")
+        self.quit.triggered.connect(app.quit)
+        menu.addAction(self.quit)
+        self.setContextMenu(menu)
+
+
+if __name__ == "__main__":
+    with open(resource_path("settings.json"), "r") as f:
+        user_settings: dict[str, str] = json.load(f)
+    desired_keyboard = user_settings["keyboard"]
+    stoppage_hotkey = user_settings["stoppage-hotkey"].split("+")
     app = QtWidgets.QApplication([])
     app.setQuitOnLastWindowClosed(False)
-    icon = QtGui.QIcon(resource_path('Icon.ico'))
-    tray = QtWidgets.QSystemTrayIcon()
-    tray.setIcon(icon)
-    tray.setVisible(True)
-    menu = QtWidgets.QMenu()
-    action1 = QtGui.QAction("Hex")
-    # action1.triggered.connect()
-    menu.addAction(action1)
-    action2 = QtGui.QAction("RGB")
-    # action2.triggered.connect()
-    menu.addAction(action2)
-    action3 = QtGui.QAction("HSV")
-    # action3.triggered.connect()
-    menu.addAction(action3)
-    quit = QtGui.QAction("Quit")
-    quit.triggered.connect(app.quit)
-    menu.addAction(quit)
-    tray.setContextMenu(menu)
     window = SettingsDialog()
-    with open('light-mode.css', 'r') as f:
-        window.setStyleSheet(f.read())
-    window.setWindowIcon(icon)
     window.show()
+    tray_icon = SystemTrayIcon(QtGui.QIcon(resource_path("Icon.ico")), app)
     app.exec()
