@@ -121,7 +121,7 @@ class SettingsDialog(QtWidgets.QDialog):
         desired_keyboard = self.ui.language_box.currentData()
         stoppage_hotkey = self.hotkeys
         new_settings = {"keyboard": desired_keyboard, "stoppage-hotkey": self.hotkeys}
-        with open(resource_path("settings.json"), "w") as file:
+        with open("pinyin-settings.json", "w") as file:
             json.dump(new_settings, file)
         main_listener.start()
         self.close()
@@ -141,10 +141,11 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
 
 if __name__ == "__main__":
-    with open(resource_path("settings.json"), "r") as f:
-        user_settings: dict[str, str] = json.load(f)
-    desired_keyboard = user_settings["keyboard"]
-    stoppage_hotkey = user_settings["stoppage-hotkey"]
+    if os.path.isfile("settings.json"):
+        with open("pinyin-settings.json", "r") as f:
+            user_settings: dict[str, str] = json.load(f)
+        desired_keyboard = user_settings["keyboard"]
+        stoppage_hotkey = user_settings["stoppage-hotkey"]
     main_listener = setup_listener()
     app = QtWidgets.QApplication([])
     app.setQuitOnLastWindowClosed(False)
