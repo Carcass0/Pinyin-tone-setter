@@ -5,7 +5,7 @@ import os
 from pynput.keyboard import Listener
 from PyQt6 import QtWidgets, QtGui
 
-from input_handler import update_sequence, desired_keyboard, stoppage_hotkey
+from input_handler import update_sequence, setup_listener, desired_keyboard, stoppage_hotkey
 from dialog import Ui_Dialog
 
 
@@ -90,7 +90,7 @@ class SettingsDialog(QtWidgets.QDialog):
         def record_keys(window: SettingsDialog, key, key_sequence) -> None:
             print(key_sequence)
             update_sequence(key, key_sequence)
-            window.ui.shortcut_edit.setText('')
+            window.ui.shortcut_edit.setText("")
             window.ui.shortcut_edit.setText("+".join(x for x in key_sequence))
 
         def assign_hotkey_listener(window: SettingsDialog, key_sequence) -> Listener:
@@ -114,6 +114,7 @@ class SettingsDialog(QtWidgets.QDialog):
         global stoppage_hotkey
         desired_keyboard = self.ui.language_box.currentData()
         stoppage_hotkey = self.hotkeys
+        main_listener.start()
         self.close()
 
 
@@ -135,6 +136,7 @@ if __name__ == "__main__":
         user_settings: dict[str, str] = json.load(f)
     desired_keyboard = user_settings["keyboard"]
     stoppage_hotkey = user_settings["stoppage-hotkey"].split("+")
+    main_listener = setup_listener()
     app = QtWidgets.QApplication([])
     app.setQuitOnLastWindowClosed(False)
     window = SettingsDialog()
