@@ -121,7 +121,7 @@ def main_processor(
             )
         return True  # type: ignore
 
-    if key_sequence[0] in ACCENTED_SYMBOLS and key_sequence[1].isnumeric():
+    if (key_sequence[1].isnumeric()) and (key_sequence[0] in ["a", "A", "e", "E", "i", "I", "o", "O"] and int(key_sequence[1]) in range(1,5)) or (key_sequence[0] in ['u', 'U'] and int(key_sequence[1]) in range(1,10)):
         """Replace vowels with their required accented version"""
         update_state(processing_state, 3, False)
         keyboard.press(Key.backspace)
@@ -132,7 +132,7 @@ def main_processor(
         keyboard.release(ACCENTED_SYMBOLS[key_sequence[0]][int(key_sequence[1]) - 1])
 
 
-def main() -> None:
+def setup_listener():
     keyboard = Controller()
     key_sequence: list[str] = ["", ""]
     if current_keyboard_language() == desired_keyboard:
@@ -145,9 +145,12 @@ def main() -> None:
         key_sequence=key_sequence,
         processing_state=processing_state,
     )
-    with Listener(on_press=on_press_action) as listener:
-        listener.join()
+    listener = Listener(on_press=on_press_action)
+    return listener
 
 
 if __name__ == "__main__":
-    main()
+    lst = setup_listener()
+    lst.start()
+    lst.join()
+    
