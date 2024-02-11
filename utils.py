@@ -3,17 +3,6 @@ from os import path
 
 from pynput.keyboard import Key
 
-
-def resource_path(relative_path) -> str:
-    """Get absolute path to resource, works for dev and for PyInstaller"""
-    try:
-        base_path = sys._MEIPASS  # type: ignore
-    except Exception:
-        base_path = path.abspath(".")
-
-    return path.join(base_path, relative_path)
-
-
 def update_sequence(key: Key, key_sequence: list[str]) -> None:
     """Listens to and records all button presses"""
 

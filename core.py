@@ -13,8 +13,18 @@ from PyQt6.QtWidgets import (
 
 from input_handler import ToneListener
 from dialog import Ui_Dialog
-from utils import resource_path, update_sequence
+from utils import update_sequence
 from constants import LANGUAGES
+
+
+def resource_path(relative_path) -> str:
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    try:
+        base_path = sys._MEIPASS  # type: ignore
+    except Exception:
+        base_path = path.abspath(".")
+
+    return path.join(base_path, relative_path)
 
 
 class SettingsDialog(QDialog):
