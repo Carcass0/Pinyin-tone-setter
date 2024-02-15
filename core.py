@@ -76,6 +76,7 @@ class SettingsDialog(QDialog):
     def confirm_input(self) -> None:
         main_listener.update_settings(keyboard=self.ui.language_box.currentData(), hotkeys=self.hotkeys)
         new_settings = {"keyboard": self.ui.language_box.currentData(), "stoppage-hotkey": self.hotkeys}
+        print(self.ui.language_box.currentText())
         with open("pinyin-settings.json", "w") as file:
             dump(new_settings, file)
         main_listener.listener.start()
@@ -99,7 +100,10 @@ if __name__ == "__main__":
     if path.isfile("pinyin-settings.json"):
         with open("pinyin-settings.json", "r") as f:
             user_settings: dict[str, str] = load(f)
-        desired_keyboard = user_settings["keyboard"]
+        if user_settings["keyboard"] is not None:
+            desired_keyboard = user_settings["keyboard"]
+        else:
+            desired_keyboard = "0x804"    
         stop_hotkeys = user_settings["stoppage-hotkey"]
     else:
         desired_keyboard = "0x804"
