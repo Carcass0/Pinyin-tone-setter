@@ -159,10 +159,14 @@ def show_replacement_dialog() -> None:
 
 if __name__ == "__main__":
     running = False
+    counter = 0
     for process in process_iter(['name']):
         if process.name() == 'Pinyin tones.exe':
-            running = True
-            show_replacement_dialog()
-            break
+            if counter == 2:
+                running = True
+                show_replacement_dialog()
+                break
+            else:
+                counter = counter + 1
     if not running:
         startup_main_app()
