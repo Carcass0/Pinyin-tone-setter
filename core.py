@@ -1,6 +1,7 @@
 from json import dump, load
 from os import path
 
+from psutil import process_iter
 from pynput.keyboard import Listener
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import (
@@ -11,6 +12,7 @@ from PyQt6.QtWidgets import (
     QMenu,
 )
 
+from alreadyRunning import Ui_ReplacementDialog
 from input_handler import ToneListener
 from dialog import Ui_Dialog
 from utils import update_sequence
@@ -29,18 +31,20 @@ def resource_path(relative_path) -> str:
 
 class SettingsDialog(QDialog):
 
-    def __init__(self):
+    def __init__(self, desired_keyboard: str, stop_hotkeys: list[str]):
         super(SettingsDialog, self).__init__()
+        self.main_listener: None|ToneListener = None
+        self.desired_keyboard = desired_keyboard
+        self.stop_hotkeys = stop_hotkeys
         self.setWindowIcon(QIcon(resource_path("Icon.ico")))
         self.hotkey_recording_status = False
-        self.hotkeys = main_listener.stop_hotkeys
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         for number, name in LANGUAGES.items():
             self.ui.language_box.addItem(name, number)
-        self.ui.language_box.setCurrentIndex(list(LANGUAGES).index(main_listener.desired_keyboard))
+        self.ui.language_box.setCurrentIndex(list(LANGUAGES).index(self.desired_keyboard))
         self.ui.language_box.setFocus()
-        self.ui.shortcut_edit.setText(f"{self.hotkeys[0]}+{self.hotkeys[1]}")
+        self.ui.shortcut_edit.setText(f"{self.stop_hotkeys[0]}+{self.stop_hotkeys[1]}")
         self.ui.shortcut_edit.setReadOnly(True)
         self.ui.confirm_button.clicked.connect(lambda: self.confirm_input())
         self.ui.record_button.clicked.connect(
@@ -71,50 +75,94 @@ class SettingsDialog(QDialog):
             return
         self.hotkey_listener.stop()
         self.ui.record_button.setText("Start recording")
-        self.hotkeys = self.ui.shortcut_edit.text().split("+")
+        try:
+            self.stop_hotkeys = self.ui.shortcut_edit.text().split("+")
+        except:
+            self.stop_hotkeys = ["alt_l", "alt_gr"]
 
     def confirm_input(self) -> None:
         if self.ui.language_box.currentData():
-            main_listener.update_settings(keyboard=self.ui.language_box.currentData(), hotkeys=self.hotkeys)
+            self.main_listener = ToneListener(desired_keyboard=self.ui.language_box.currentData(), stop_hotkeys=self.stop_hotkeys)
+            new_settings = {"keyboard": self.ui.language_box.currentData(), "stoppage-hotkey": self.stop_hotkeys}
         else:
-            main_listener.update_settings(keyboard=list(LANGUAGES.keys())[list(LANGUAGES.values()).index(self.ui.language_box.currentData())], hotkeys=self.hotkeys)
-        new_settings = {"keyboard": self.ui.language_box.currentData(), "stoppage-hotkey": self.hotkeys}
-        print(self.ui.language_box.currentText())
+            if self.ui.language_box.currentText() in LANGUAGES.values():
+                kb = list(LANGUAGES.keys())[list(LANGUAGES.values()).index(self.ui.language_box.currentText())]
+                self.main_listener = ToneListener(desired_keyboard=kb, stop_hotkeys=self.stop_hotkeys)
+                new_settings = {"keyboard": kb, "stoppage-hotkey": self.stop_hotkeys}
+            else:
+                self.main_listener = ToneListener(desired_keyboard="0x804", stop_hotkeys=self.stop_hotkeys)
+                new_settings = {"keyboard": "0x804", "stoppage-hotkey": self.stop_hotkeys}
         with open("pinyin-settings.json", "w") as file:
             dump(new_settings, file)
-        main_listener.listener.start()
+        self.main_listener.listener.start()
         self.close()
 
 
 class SystemTrayIcon(QSystemTrayIcon):
 
-    def __init__(self, icon: QIcon, app: QApplication, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, icon: QIcon, app: QApplication, window: SettingsDialog):
+        super().__init__()
+        self.window = window
         self.setIcon(icon)
         self.show()
         menu = QMenu()
         self.quit = QAction("Quit")
         self.quit.triggered.connect(app.quit)
+        self.showMenu = QAction("Show menu")
+        self.showMenu.triggered.connect(lambda: show_menu(self.window))
+        menu.addAction(self.showMenu)
         menu.addAction(self.quit)
         self.setContextMenu(menu)
 
 
-if __name__ == "__main__":
+class AlreadyRunningDialog(QDialog):
+    
+    def __init__(self, icon):
+        super(AlreadyRunningDialog, self).__init__()
+        self.ui = Ui_ReplacementDialog()
+        self.ui.setupUi(self)
+        self.setWindowIcon(icon)
+
+
+def show_menu(window: SettingsDialog) -> None:
+    if window.main_listener is not None:
+        window.main_listener.listener.stop()
+    window.show()
+
+
+def startup_main_app() -> None:
     if path.isfile("pinyin-settings.json"):
         with open("pinyin-settings.json", "r") as f:
             user_settings: dict[str, str] = load(f)
-        if user_settings["keyboard"] is not None:   #likely unneeded as of 15.02.2024; kept for unforeseen circumstances
-            desired_keyboard = user_settings["keyboard"]
+        if user_settings["keyboard"] is None: #likely unneeded as of 15.02.2024; kept for unforeseen circumstances
+            desired_keyboard = "0x804"   
         else:
-            desired_keyboard = "0x804"    
-        stop_hotkeys = user_settings["stoppage-hotkey"]
+            desired_keyboard = user_settings["keyboard"]   
+        stop_hotkeys = list(user_settings["stoppage-hotkey"])
     else:
         desired_keyboard = "0x804"
         stop_hotkeys = ["alt_l", "alt_gr"]
-    main_listener = ToneListener(desired_keyboard, stop_hotkeys)
     app = QApplication([])
     app.setQuitOnLastWindowClosed(False)
-    window = SettingsDialog()
+    window = SettingsDialog(desired_keyboard, stop_hotkeys)
     window.show()
-    tray_icon = SystemTrayIcon(QIcon(resource_path("Icon.ico")), app)
+    tray_icon = SystemTrayIcon(QIcon(resource_path("Icon.ico")), app, window)
     app.exec()
+
+
+def show_replacement_dialog() -> None:
+    app = QApplication([])
+    dialog = AlreadyRunningDialog(QIcon(resource_path("Icon.ico")))
+    dialog.show()
+    app.exec()
+
+
+if __name__ == "__main__":
+    running = False
+    for process in process_iter(['name']):
+        if process.name() == 'Pinyin tones.exe':
+            running = True
+            show_replacement_dialog()
+            break
+    if not running:
+        startup_main_app()
