@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
 from alreadyRunning import Ui_ReplacementDialog
 from input_handler import ToneListener
 from dialog import Ui_Dialog
-from utils import update_sequence
+from utils import update_sequence, current_keyboard_language
 from constants import LANGUAGES
 
 
@@ -133,14 +133,18 @@ def show_menu(window: SettingsDialog) -> None:
 def startup_main_app() -> None:
     if path.isfile("pinyin-settings.json"):
         with open("pinyin-settings.json", "r") as f:
-            user_settings: dict[str, str] = load(f)
-        if user_settings["keyboard"] is None: #likely unneeded as of 15.02.2024; kept for unforeseen circumstances
-            desired_keyboard = "0x804"   
-        else:
-            desired_keyboard = user_settings["keyboard"]   
-        stop_hotkeys = list(user_settings["stoppage-hotkey"])
-    else:
-        desired_keyboard = "0x804"
+            try:
+                user_settings: dict[str, str]|None = load(f)
+            except:
+                user_settings = None
+        if user_settings:
+            if user_settings["keyboard"] is None: 
+                desired_keyboard = current_keyboard_language()   
+            else:
+                desired_keyboard = user_settings["keyboard"]   
+            stop_hotkeys = list(user_settings["stoppage-hotkey"])
+    if not user_settings:
+        desired_keyboard = current_keyboard_language()
         stop_hotkeys = ["alt_l", "alt_gr"]
     app = QApplication([])
     app.setQuitOnLastWindowClosed(False)

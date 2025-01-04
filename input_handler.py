@@ -22,7 +22,7 @@ class ToneListener():
             processing_state=processing_state,
         )   
         self.listener = Listener(on_press=on_press_action)
-    
+
     def main_processor(
     self, key: Key, keyboard: Controller, key_sequence: list[str], processing_state: list[int]
     ) -> None:
